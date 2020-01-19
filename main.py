@@ -15,8 +15,6 @@ if __name__ == '__main__':
                 product_name = 'item_lphc' * (prod_setting == 1) + 'item_hplc' * (prod_setting == 2)
                 for times in range(10):
 
-                    Model('mMdag_' + str(times), dataset_name, product_name, cascade_model).model_Mdag(r_flag=False)
-                    Model('mMdagr_' + str(times), dataset_name, product_name, cascade_model).model_Mdag(r_flag=True)
                     Model('mdag1_' + str(times), dataset_name, product_name, cascade_model).model_dag(1, r_flag=False)
                     Model('mdag1r_' + str(times), dataset_name, product_name, cascade_model).model_dag(1, r_flag=True)
                     Model('mdag2_' + str(times), dataset_name, product_name, cascade_model).model_dag(2, r_flag=False)
@@ -29,10 +27,6 @@ if __name__ == '__main__':
                     for wd in wd_seq:
                         wallet_distribution_type = 'm50e25' * (wd == 1) + 'm99e96' * (wd == 2) + 'm66e34' * (wd == 3)
 
-                        Model('mMdagepw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_Mdag(r_flag=False, epw_flag=True)
-                        Model('mMdagrepw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_Mdag(r_flag=True, epw_flag=True)
-                        Model('mMdagpw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_Mdag(r_flag=False)
-                        Model('mMdagrpw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_Mdag(r_flag=True)
                         Model('mdag1epw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_dag(1, r_flag=False, epw_flag=True)
                         Model('mdag1repw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_dag(1, r_flag=True, epw_flag=True)
                         Model('mdag2epw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_dag(2, r_flag=False, epw_flag=True)

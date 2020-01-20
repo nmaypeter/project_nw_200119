@@ -8,7 +8,7 @@ import heap
 
 
 class SeedSelectionMIOA:
-    def __init__(self, graph_dict, seed_cost_dict, product_list, product_weight_list, dag_class, r_flag, epw_flag):
+    def __init__(self, graph_dict, seed_cost_dict, product_list, product_weight_list, dag_class, r_flag, epw_flag, M_flag):
         ### graph_dict: (dict) the graph
         ### seed_cost_dict[i]: (float4) the seed of i-node and k-item
         ### product_list: (list) the set to record products [k's profit, k's cost, k's price]
@@ -22,6 +22,7 @@ class SeedSelectionMIOA:
         self.dag_class = dag_class
         self.r_flag = r_flag
         self.epw_flag = epw_flag
+        self.M_flag = M_flag
         self.prob_threshold = 0.001
 
     def generateMIOA(self):
@@ -100,7 +101,9 @@ class SeedSelectionMIOA:
                             if i_prod <= node_rank_dict[j]:
                                 continue
                         node_rank_dict[j] = i_prod
-
+            
+            if self.M_flag:
+                node_rank_dict = {**{i_node: 0.0 for i_node in self.seed_cost_dict}, **node_rank_dict}
             # -- i_set collect nodes with out-neighbor --
             i_set = set(i for i in self.graph_dict if i in node_rank_dict)
             for i in i_set:
@@ -177,7 +180,7 @@ class SeedSelectionMIOA:
 
     def generateCelfHeap(self, mioa_dict):
         celf_heap = []
-        ss = SeedSelectionMIOA(self.graph_dict, self.seed_cost_dict, self.product_list, self.product_weight_list, self.dag_class, self.r_flag, self.epw_flag)
+        ss = SeedSelectionMIOA(self.graph_dict, self.seed_cost_dict, self.product_list, self.product_weight_list, self.dag_class, self.r_flag, self.epw_flag, self.M_flag)
         for k in range(self.num_product):
             for i in self.graph_dict:
                 s_set = [set() for _ in range(self.num_product)]

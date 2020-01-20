@@ -18,7 +18,7 @@ class Model:
         self.budget_iteration = [i for i in range(10, 6, -1)]
         self.monte_carlo = 100
 
-    def model_dag(self, dag_class, r_flag, epw_flag=False):
+    def model_dag(self, dag_class, r_flag, epw_flag=False, M_flag=False):
         ini = Initialization(self.dataset_name, self.product_name, self.wallet_distribution_type)
         seed_cost_dict = ini.constructSeedCostDict()
         graph_dict = ini.constructGraphDict(self.cascade_model)
@@ -29,7 +29,7 @@ class Model:
         seed_set_sequence = [-1 for _ in range(len(self.budget_iteration))]
         ss_time_sequence = [-1 for _ in range(len(self.budget_iteration))]
         seed_data_sequence = [-1 for _ in range(len(self.budget_iteration))]
-        ssmioa_model = SeedSelectionMIOA(graph_dict, seed_cost_dict, product_list, product_weight_list, dag_class, r_flag, epw_flag)
+        ssmioa_model = SeedSelectionMIOA(graph_dict, seed_cost_dict, product_list, product_weight_list, dag_class, r_flag, epw_flag, M_flag)
 
         ss_start_time = time.time()
         bud_iteration = self.budget_iteration.copy()

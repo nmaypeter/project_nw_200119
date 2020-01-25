@@ -271,7 +271,6 @@ class SeedSelectionNG:
         ss = SeedSelectionNG(self.graph_dict, self.seed_cost_dict, self.product_list, self.product_weight_list, self.r_flag, self.epw_flag)
         for k in range(self.num_product):
             for i in self.graph_dict:
-                print(k, i)
                 s_set = [set() for _ in range(self.num_product)]
                 s_set[k].add(i)
                 ep = ss.getSeedSetProfit(s_set)

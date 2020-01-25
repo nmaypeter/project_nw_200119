@@ -138,7 +138,6 @@ class Model:
         ss_time_sequence = [-1 for _ in range(len(self.budget_iteration))]
         seed_data_sequence = [-1 for _ in range(len(self.budget_iteration))]
         ssng_model = SeedSelectionNG(graph_dict, seed_cost_dict, product_list, product_weight_list, r_flag, epw_flag)
-        diff_model = Diffusion(graph_dict, product_list, product_weight_list, epw_flag)
 
         ss_start_time = time.time()
         bud_iteration = self.budget_iteration.copy()
@@ -182,13 +181,13 @@ class Model:
                 if mep_flag == seed_set_length:
                     seed_set[mep_k_prod].add(mep_i_node)
                     now_budget = round(now_budget + sc, 4)
-                    now_profit = safe_div(sum([diff_model.getSeedSetProfit(seed_set) for _ in range(self.monte_carlo)]), self.monte_carlo)
+                    now_profit = ssng_model.getSeedSetProfit(seed_set)
                     seed_data.append(str(round(time.time() - ss_start_time + ss_acc_time, 4)) + '\t' + str(mep_k_prod) + '\t' + str(mep_i_node) + '\t' +
                                      str(now_budget) + '\t' + str(now_profit) + '\t' + str([len(seed_set[k]) for k in range(num_product)]) + '\n')
                 else:
                     seed_set_t = copy.deepcopy(seed_set)
                     seed_set_t[mep_k_prod].add(mep_i_node)
-                    ep_t = safe_div(sum([diff_model.getSeedSetProfit(seed_set_t) for _ in range(self.monte_carlo)]), self.monte_carlo)
+                    ep_t = ssng_model.getSeedSetProfit(seed_set_t)
                     mg_t = round(ep_t - now_profit, 4)
                     if r_flag:
                         mg_t = safe_div(mg_t, sc)

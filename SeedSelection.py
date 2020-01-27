@@ -105,7 +105,7 @@ class SeedSelectionMIOA:
             if self.M_flag:
                 node_rank_dict = {**{i_node: 0.0 for i_node in self.seed_cost_dict}, **node_rank_dict}
             # -- i_set collect nodes with out-neighbor --
-            i_set = set(i for i in self.graph_dict if i in node_rank_dict)
+            i_set = set(i for i in self.graph_dict if i in node_rank_dict and node_rank_dict[i] > 0.0)
             for i in i_set:
                 # -- j_set collect nodes may be passed information from i --
                 j_set = set(j for j in self.graph_dict[i] if j in node_rank_dict and node_rank_dict[i] > node_rank_dict[j])
@@ -305,3 +305,169 @@ class SeedSelectionHD:
                 heap.heappush_max(degree_heap, degree_item)
 
         return degree_heap
+
+### PMIS
+
+
+class SeedSelectionPMIS:
+    def __init__(self, graph_dict, seed_cost_dict, product_list, product_weight_list, epw_flag):
+        ### graph_dict: (dict) the graph
+        ### seed_cost_dict[i]: (float4) the seed of i-node and k-item
+        ### product_list: (list) the set to record products [k's profit, k's cost, k's price]
+        ### num_product: (int) the kinds of products
+        ### product_weight_list: (list) the product weight list
+        ### monte: (int) monte carlo times
+        self.graph_dict = graph_dict
+        self.seed_cost_dict = seed_cost_dict
+        self.product_list = product_list
+        self.num_product = len(product_list)
+        self.product_weight_list = product_weight_list
+        self.epw_flag = epw_flag
+        self.prob_threshold = 0.001
+
+    def generateCelfHeap(self):
+        # -- calculate expected profit for all combinations of nodes and products --
+        ### celf_item: (list) (mg, k_prod, i_node, flag)
+        calf_heap = [[] for _ in range(self.num_product)]
+
+        ss = SeedSelectionNG(self.graph_dict, self.seed_cost_dict, self.product_list, self.product_weight_list, True, self.epw_flag)
+        for k in range(self.num_product):
+            for i in self.graph_dict:
+                s_set = [set() for _ in range(self.num_product)]
+                s_set[k].add(i)
+                ep = ss.getSeedSetProfit(s_set)
+
+                if ep > 0:
+                    ep = safe_div(ep, self.seed_cost_dict[i])
+                    celf_item = (ep, k, i, 0)
+                    heap.heappush_max(calf_heap[k], celf_item)
+
+        return calf_heap
+
+    def solveMCPK(self, bud, s_matrix, c_matrix):
+        ### bud_index: (list) the using budget index for products
+        ### bud_bound_index: (list) the bound budget index for products
+        bud_index, bud_bound_index = [len(k) - 1 for k in c_matrix], [0 for _ in range(self.num_product)]
+        MCKP_list = []
+
+        ss = SeedSelectionNG(self.graph_dict, self.seed_cost_dict, self.product_list, self.product_weight_list, True, self.epw_flag)
+        while bud_index != bud_bound_index:
+            ### bud_pmis: (float) the budget in this pmis execution
+            bud_pmis = sum(c_matrix[k][bud_index[k]] for k in range(self.num_product))
+
+            if bud_pmis <= bud:
+                seed_set_flag = True
+                if MCKP_list:
+                    for senpai_item in MCKP_list:
+                        compare_list_flag = True
+                        for b_index in bud_index:
+                            senpai_index = senpai_item[bud_index.index(b_index)]
+                            if b_index > senpai_index:
+                                compare_list_flag = False
+                                break
+
+                        if compare_list_flag:
+                            seed_set_flag = False
+                            break
+
+                if seed_set_flag:
+                    MCKP_list.append(bud_index.copy())
+
+            pointer = self.num_product - 1
+            while bud_index[pointer] == bud_bound_index[pointer]:
+                bud_index[pointer] = len(c_matrix[pointer]) - 1
+                pointer -= 1
+            bud_index[pointer] -= 1
+
+        mep_result = (0.0, [set() for _ in range(self.num_product)])
+        while MCKP_list:
+            bud_index = MCKP_list.pop(0)
+
+            s_set = [s_matrix[k][bud_index[k]][k].copy() for k in range(self.num_product)]
+            ep = ss.getSeedSetProfit(s_set)
+
+            if ep > mep_result[0]:
+                mep_result = (ep, s_set)
+
+        return mep_result[1]
+
+### BCS
+
+
+class SeedSelectionBCS:
+    def __init__(self, graph_dict, seed_cost_dict, product_list, product_weight_list, epw_flag):
+        ### graph_dict: (dict) the graph
+        ### seed_cost_dict[i]: (float4) the seed of i-node and k-item
+        ### product_list: (list) the set to record products [k's profit, k's cost, k's price]
+        ### num_product: (int) the kinds of products
+        ### product_weight_list: (list) the product weight list
+        ### monte: (int) monte carlo times
+        self.graph_dict = graph_dict
+        self.seed_cost_dict = seed_cost_dict
+        self.product_list = product_list
+        self.num_product = len(product_list)
+        self.product_weight_list = product_weight_list
+        self.epw_flag = epw_flag
+        self.prob_threshold = 0.001
+
+    def getSeedSetProfit(self, s_set):
+        s_total_set = set(s for k in range(self.num_product) for s in s_set[k])
+        inf_dict = [{i: 0.0 for i in self.seed_cost_dict} for _ in range(self.num_product)]
+
+        for k in range(self.num_product):
+            for s in [s for s in s_set[k] if s in self.graph_dict]:
+                for i in [i for i in self.graph_dict[s] if i not in s_total_set]:
+                    activated_prob = self.graph_dict[s][i] * (self.product_weight_list[k] if self.epw_flag else 1.0)
+                    inf_dict[k][i] = round(1.0 - (1.0 - inf_dict[k][i]) * (1.0 - activated_prob), 4)
+
+                    if i in self.graph_dict:
+                        for j in [j for j in self.graph_dict[i] if j not in s_total_set]:
+                            activated_prob = self.graph_dict[i][j] * (self.product_weight_list[k] if self.epw_flag else 1.0)
+                            inf_dict[k][j] = round(1.0 - (1.0 - inf_dict[k][i]) * (1.0 - activated_prob), 4)
+
+        ep = sum(sum(inf_dict[k].values()) * self.product_list[k][0] * (1.0 if self.epw_flag else self.product_weight_list[k])
+                 for k in range(self.num_product))
+
+        return round(ep, 4)
+
+    def generateCelfHeap(self):
+        # -- calculate expected profit for all combinations of nodes and products --
+        ### celf_item: (list) (mg, k_prod, i_node, flag)
+        degree_dict = {}
+        for i in self.graph_dict:
+            deg = len(self.graph_dict[i])
+            if int(deg) in degree_dict:
+                degree_dict[int(deg)].add(i)
+            else:
+                degree_dict[int(deg)] = {i}
+
+        num_node20 = round(sum(deg * len(degree_dict[deg]) for deg in degree_dict) * 0.2, 4)
+        degree_count_dict = {deg: round(abs(sum([len(degree_dict[d]) for d in degree_dict if d >= deg]) - num_node20), 4) for
+                             deg in degree_dict}
+        degree_threshold20 = min(degree_count_dict, key=degree_count_dict.get)
+        Billboard_set, Handbill_set = set(), set()
+        for deg in degree_dict:
+            if deg >= degree_threshold20:
+                Billboard_set = Billboard_set.union(degree_dict[deg])
+            else:
+                Handbill_set = Handbill_set.union(degree_dict[deg])
+
+        Billboard_celf_heap, Handbill_celf_heap = [], []
+
+        ss = SeedSelectionBCS(self.graph_dict, self.seed_cost_dict, self.product_list, self.product_weight_list, self.epw_flag)
+        for k in range(self.num_product):
+            for i in self.graph_dict:
+                s_set = [set() for _ in range(self.num_product)]
+                s_set[k].add(i)
+                ep = ss.getSeedSetProfit(s_set)
+
+                if ep > 0:
+                    if i in Billboard_set:
+                        celf_item = (ep, k, i, 0)
+                        heap.heappush_max(Billboard_celf_heap, celf_item)
+                    elif i in Handbill_set:
+                        ep = safe_div(ep, self.seed_cost_dict[i])
+                        celf_item = (ep, k, i, 0)
+                        heap.heappush_max(Handbill_celf_heap, celf_item)
+
+        return [Billboard_celf_heap, Handbill_celf_heap]

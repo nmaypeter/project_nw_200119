@@ -328,19 +328,18 @@ class SeedSelectionPMIS:
     def generateCelfHeap(self):
         # -- calculate expected profit for all combinations of nodes and products --
         ### celf_item: (list) (mg, k_prod, i_node, flag)
-        calf_heap = [[] for _ in range(self.num_product)]
+        calf_heap = []
 
         ss = SeedSelectionNG(self.graph_dict, self.seed_cost_dict, self.product_list, self.product_weight_list, True, self.epw_flag)
-        for k in range(self.num_product):
-            for i in self.graph_dict:
-                s_set = [set() for _ in range(self.num_product)]
-                s_set[k].add(i)
-                ep = ss.getSeedSetProfit(s_set)
+        for i in self.graph_dict:
+            s_set = [set() for _ in range(self.num_product)]
+            s_set[0].add(i)
+            ep = ss.getSeedSetProfit(s_set)
 
-                if ep > 0:
-                    ep = safe_div(ep, self.seed_cost_dict[i])
-                    celf_item = (ep, k, i, 0)
-                    heap.heappush_max(calf_heap[k], celf_item)
+            if ep > 0:
+                ep = safe_div(ep, self.seed_cost_dict[i])
+                celf_item = (ep, 0, i, 0)
+                heap.heappush_max(calf_heap, celf_item)
 
         return calf_heap
 

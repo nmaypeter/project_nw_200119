@@ -25,6 +25,8 @@ if __name__ == '__main__':
                     Model('mngr_' + str(times), dataset_name, product_name, cascade_model).model_ng(r_flag=True)
                     Model('mhd_' + str(times), dataset_name, product_name, cascade_model).model_hd()
                     Model('mr_' + str(times), dataset_name, product_name, cascade_model).model_r()
+                    Model('mpmis_' + str(times), dataset_name, product_name, cascade_model).model_pmis()
+                    Model('mbcs_' + str(times), dataset_name, product_name, cascade_model).model_bcs()
 
                     for wd in wd_seq:
                         wallet_distribution_type = 'm50e25' * (wd == 1) + 'm99e96' * (wd == 2) + 'm66e34' * (wd == 3)
@@ -45,3 +47,5 @@ if __name__ == '__main__':
                         Model('mngrepw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_ng(r_flag=True, epw_flag=True)
                         Model('mngpw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_ng(r_flag=False)
                         Model('mngrpw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_ng(r_flag=True)
+                        Model('mpmisepw_' + str(times), dataset_name, product_name, cascade_model).model_pmis(epw_flag=True)
+                        Model('mbcsepw_' + str(times), dataset_name, product_name, cascade_model).model_bcs(epw_flag=True)

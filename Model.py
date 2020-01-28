@@ -435,43 +435,38 @@ class Model:
             print('@ selection\t' + self.model_name + ' @ ' + self.new_dataset_name + '_' + self.cascade_model +
                   '\t' + self.wallet_distribution_type + '_' + self.new_product_name + '_bi' + str(now_b_iter) + ', budget = ' + str(total_budget))
 
-            s_matrix_sequence, c_matrix_sequence = [], []
-            for k in range(num_product):
-                # -- initialization for each sample --
-                now_budget, now_profit = 0.0, 0.0
-                seed_set = [set() for _ in range(num_product)]
-                s_matrix, c_matrix = [[set() for _ in range(num_product)]], [0.0]
+            # -- initialization for each sample --
+            now_budget, now_profit = 0.0, 0.0
+            seed_set = [set() for _ in range(num_product)]
+            s_matrix, c_matrix = [[set() for _ in range(num_product)]], [0.0]
 
-                while now_budget < total_budget and celf_heap[k]:
-                    mep_item = heap.heappop_max(celf_heap[k])
-                    mep_mg, mep_k_prod, mep_i_node, mep_flag = mep_item
-                    sc = seed_cost_dict[mep_i_node]
-                    seed_set_length = sum(len(seed_set[k]) for k in range(num_product))
+            while now_budget < total_budget and celf_heap:
+                mep_item = heap.heappop_max(celf_heap)
+                mep_mg, mep_k_prod, mep_i_node, mep_flag = mep_item
+                sc = seed_cost_dict[mep_i_node]
+                seed_set_length = sum(len(seed_set[k]) for k in range(num_product))
 
-                    if round(now_budget + sc, 4) > total_budget:
-                        continue
+                if round(now_budget + sc, 4) > total_budget:
+                    continue
 
-                    if mep_flag == seed_set_length:
-                        seed_set[mep_k_prod].add(mep_i_node)
-                        now_budget = round(now_budget + sc, 4)
-                        now_profit = ssng_model.getSeedSetProfit(seed_set)
-                        s_matrix.append(copy.deepcopy(seed_set))
-                        c_matrix.append(now_budget)
-                    else:
-                        seed_set_t = copy.deepcopy(seed_set)
-                        seed_set_t[mep_k_prod].add(mep_i_node)
-                        ep_t = ssng_model.getSeedSetProfit(seed_set_t)
-                        mg_t = round(ep_t - now_profit, 4)
-                        flag_t = seed_set_length
+                if mep_flag == seed_set_length:
+                    seed_set[mep_k_prod].add(mep_i_node)
+                    now_budget = round(now_budget + sc, 4)
+                    now_profit = ssng_model.getSeedSetProfit(seed_set)
+                    s_matrix.append(copy.deepcopy(seed_set))
+                    c_matrix.append(now_budget)
+                else:
+                    seed_set_t = copy.deepcopy(seed_set)
+                    seed_set_t[mep_k_prod].add(mep_i_node)
+                    ep_t = ssng_model.getSeedSetProfit(seed_set_t)
+                    mg_t = round(ep_t - now_profit, 4)
+                    flag_t = seed_set_length
 
-                        if mg_t > 0:
-                            celf_item_t = (mg_t, mep_k_prod, mep_i_node, flag_t)
-                            heap.heappush_max(celf_heap[k], celf_item_t)
+                    if mg_t > 0:
+                        celf_item_t = (mg_t, mep_k_prod, mep_i_node, flag_t)
+                        heap.heappush_max(celf_heap, celf_item_t)
 
-                s_matrix_sequence.append(s_matrix)
-                c_matrix_sequence.append(c_matrix)
-
-            seed_set = sspmis_model.solveMCPK(total_budget, s_matrix_sequence, c_matrix_sequence)
+            seed_set = sspmis_model.solveMCPK(total_budget, [s_matrix] * num_product, [c_matrix] * num_product)
             now_budget = sum(seed_cost_dict[i] for k in range(num_product) for i in seed_set[k])
 
             ss_time = round(time.time() - ss_start_time + ss_acc_time, 4)

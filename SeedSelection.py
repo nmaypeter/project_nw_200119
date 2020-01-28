@@ -102,7 +102,7 @@ class SeedSelectionMIOA:
                                 continue
                         node_rank_dict[j] = i_prod
             
-            if self.M_flag:
+            if not self.M_flag:
                 node_rank_dict = {**{i_node: 0.0 for i_node in self.seed_cost_dict}, **node_rank_dict}
             # -- i_set collect nodes with out-neighbor --
             i_set = set(i for i in self.graph_dict if i in node_rank_dict and node_rank_dict[i] > 0.0)

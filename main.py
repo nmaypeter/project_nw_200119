@@ -47,5 +47,5 @@ if __name__ == '__main__':
                         Model('mngrepw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_ng(r_flag=True, epw_flag=True)
                         Model('mngpw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_ng(r_flag=False)
                         Model('mngrpw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_ng(r_flag=True)
-                        Model('mpmisepw_' + str(times), dataset_name, product_name, cascade_model).model_pmis(epw_flag=True)
-                        Model('mbcsepw_' + str(times), dataset_name, product_name, cascade_model).model_bcs(epw_flag=True)
+                        Model('mpmisepw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_pmis(epw_flag=True)
+                        Model('mbcsepw_' + str(times), dataset_name, product_name, cascade_model, wallet_distribution_type).model_bcs(epw_flag=True)
